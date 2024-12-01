@@ -50,7 +50,7 @@ Resources:
   UserDynamoStreamQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: user-dynamo-stream-fifo
+      QueueName: user-dynamo-stream.fifo
       FifoQueue: true
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt UserDynamoStreamDeadLetterQueue.Arn
@@ -58,7 +58,7 @@ Resources:
   UserDynamoStreamDeadLetterQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: user-dynamo-stream-deadletter-fifo
+      QueueName: user-dynamo-stream-deadletter.fifo
       FifoQueue: true
   ###############################################
   # IAM ROLES
