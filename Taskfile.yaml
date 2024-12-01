@@ -1,0 +1,55 @@
+version: "3"
+
+tasks:
+  deploy:
+    desc: "Build task to build and deploy full stack"
+    cmds:
+      - task: sam-build
+      - task: sam-validate
+      - task: sam-deploy
+      - task: cleanup
+      - echo "[INFO] Script completed successfully."
+
+  delete:
+    desc: "Delete task to clean out S3 buckets and delete full stack"
+    cmds:
+      - task: sam-delete
+      - task: cleanup
+      - echo "[INFO] Script completed successfully."
+
+  sam-build:
+    desc: "Build SAM application"
+    cmds:
+      - echo "[INFO] Starting SAM build."
+      - sam build
+    silent: false
+    ignore_error: false
+
+  sam-deploy:
+    desc: "Deploy SAM application"
+    cmds:
+      - echo "[INFO] Starting SAM deployment."
+      - sam deploy
+    silent: false
+
+  sam-validate:
+    desc: "Validate SAM template"
+    cmds:
+      - echo "[INFO] Validating SAM template."
+      - sam validate --lint
+    silent: false
+    ignore_error: false
+
+  sam-delete:
+    desc: "Upload Glue Job script to S3"
+    cmds:
+      - sam delete --no-prompts
+    silent: false
+    ignore_error: false
+
+  cleanup:
+    desc: "Perform cleanup"
+    cmds:
+      - echo "[INFO] No cleanup logic... exiting."
+    silent: false
+    ignore_error: false
