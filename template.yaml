@@ -47,14 +47,23 @@ Resources:
   ###############################################
   # QUEUES
   ###############################################
-  UserStreamTargetQueue:
+  UserDynamoStreamQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: user-stream-target
+      QueueName: user-dynamo-stream-fifo
+      FifoQueue: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt UserDynamoStreamDeadLetterQueue.Arn
+        maxReceiveCount: 5
+  UserDynamoStreamDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: user-dynamo-stream-deadletter-fifo
+      FifoQueue: true
   ###############################################
   # IAM ROLES
   ###############################################
-  UserPipeRole:
+  UserDynamoStreamPipeRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -103,12 +112,12 @@ Resources:
                   - "sqs:SendMessage"
                 Resource:
                   - "Fn::GetAtt":
-                      - UserStreamTargetQueue
+                      - UserDynamoStreamQueue
                       - Arn
   ###############################################
   # FUNCTIONS
   ###############################################
-  UserStreamConsumerFunction:
+  UserDynamoStreamQueueConsumerFunction:
     Type: "AWS::Serverless::Function"
     Metadata:
       BuildMethod: go1.x
@@ -121,35 +130,26 @@ Resources:
         SQSEvent:
           Type: SQS
           Properties:
-            Queue: !GetAtt UserStreamTargetQueue.Arn
+            Queue: !GetAtt UserDynamoStreamQueue.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref OrganizationTable
       Policies:
         - SQSPollerPolicy:
-            QueueName: !GetAtt UserStreamTargetQueue.QueueName
+            QueueName: !GetAtt UserDynamoStreamQueue.QueueName
   ###############################################
   # EVENT BRIDGE PIPES
   ###############################################
-  PipeWithFiltering:
+  UserDynamoStreamPipe:
     Type: "AWS::Pipes::Pipe"
     Properties:
-      Name: user-stream-pipe
-      RoleArn:
-        "Fn::GetAtt":
-          - UserPipeRole
-          - Arn
-      Source:
-        "Fn::GetAtt":
-          - UserTable
-          - StreamArn
+      Name: user-table-dynamo-pipe
+      RoleArn: !GetAtt UserDynamoStreamPipeRole.Arn
+      Source: !GetAtt UserTable.StreamArn
       SourceParameters:
         DynamoDBStreamParameters:
           StartingPosition: LATEST
         FilterCriteria:
           Filters:
             - Pattern: '{ "eventName": ["INSERT", "MODIFY", "DELETE"] }'
-      Target:
-        "Fn::GetAtt":
-          - UserStreamTargetQueue
-          - Arn
+      Target: !GetAtt UserDynamoStreamQueue.Arn
