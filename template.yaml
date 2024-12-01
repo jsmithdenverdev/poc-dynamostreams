@@ -52,6 +52,7 @@ Resources:
     Properties:
       QueueName: user-dynamo-stream.fifo
       FifoQueue: true
+      ContentBasedDeduplication: true
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt UserDynamoStreamDeadLetterQueue.Arn
         maxReceiveCount: 5
@@ -153,3 +154,7 @@ Resources:
           Filters:
             - Pattern: '{ "eventName": ["INSERT", "MODIFY", "DELETE"] }'
       Target: !GetAtt UserDynamoStreamQueue.Arn
+      TargetParameters:
+        SqsQueueParameters:
+          MessageDeduplicationId: !Ref AWS::NoValue
+          MessageGroupId: "default-group"
