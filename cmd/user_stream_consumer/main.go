@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -27,7 +28,20 @@ func run(stdout io.Writer, getenv func(string) string) error {
 
 func handler(logger *slog.Logger) func(ctx context.Context, event events.SQSEvent) error {
 	return func(ctx context.Context, event events.SQSEvent) error {
-		logger.InfoContext(ctx, "handler called", slog.Any("event", event))
+		var records []events.DynamoDBEvent
+
+		for _, record := range event.Records {
+			var dynamoevent events.DynamoDBEvent
+			_ = json.Unmarshal([]byte(record.Body), &dynamoevent)
+			records = append(records, dynamoevent)
+		}
+
+		logger.InfoContext(
+			ctx,
+			"user_stream_consumer",
+			slog.Any("event", event),
+			slog.Any("records", records))
+
 		return nil
 	}
 }
