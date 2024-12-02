@@ -85,7 +85,7 @@ Resources:
                       - Ref: "AWS::Region"
                       - ":"
                       - Ref: "AWS::AccountId"
-                      - ":pipe/user-stream-pipe"
+                      - ":pipe/user-table-dynamo-pipe"
                 "aws:SourceAccount":
                   Ref: "AWS::AccountId"
       Path: /
