@@ -53,3 +53,59 @@ tasks:
       - echo "[INFO] No cleanup logic... exiting."
     silent: false
     ignore_error: false
+  put-item:
+    desc: Perform a DynamoDB PutItem request
+    vars:
+      table_name: "poc-users"
+    cmds:
+      - |
+        echo '{
+          "TableName": "{{.table_name}}",
+          "Item": {
+            "pk": {
+              "S": "USER#auth0|66199504eddfc16953adc92e"
+            },
+            "sk": {
+              "S": "METADATA"
+            },
+            "email": {
+              "S": "admin@example.org"
+            },
+            "status": {
+              "S": "ACTIVE"
+            },
+            "organizations": {
+              "L": [
+                {
+                  "S": "101db94c-28c3-47c8-9fd9-e59219a89c78"
+                },
+                {
+                  "S": "43ca7b5b-dfc5-410a-af28-543d8cde73f8"
+                }
+              ]
+            }
+          }
+        }' > /tmp/dynamodb-put-item.json
+      - aws dynamodb put-item --cli-input-json file:///tmp/dynamodb-put-item.json
+      - rm /tmp/dynamodb-put-item.json
+  delete-item:
+    desc: Perform a DynamoDB DeleteItem request
+    vars:
+      table_name: "poc-users"
+      pk: "USER#auth0|66199504eddfc16953adc92e"
+      sk: "METADATA"
+    cmds:
+      - |
+        echo '{
+          "TableName": "{{.table_name}}",
+          "Key": {
+            "pk": {
+              "S": "{{.pk}}"
+            },
+            "sk": {
+              "S": "{{.sk}}"
+            }
+          }
+        }' > /tmp/dynamodb-delete-item.json
+      - aws dynamodb delete-item --cli-input-json file:///tmp/dynamodb-delete-item.json
+      - rm /tmp/dynamodb-delete-item.json
