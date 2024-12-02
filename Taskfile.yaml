@@ -109,3 +109,100 @@ tasks:
         }' > /tmp/dynamodb-delete-item.json
       - aws dynamodb delete-item --cli-input-json file:///tmp/dynamodb-delete-item.json
       - rm /tmp/dynamodb-delete-item.json
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test -v ./...
+    sources:
+      - ./**/*.go
+    generates:
+      - coverage.out
+
+  test:watch:
+    desc: Run tests in watch mode
+    cmds:
+      - go test -v ./... -count=1
+    sources:
+      - ./**/*.go
+    generates:
+      - coverage.out
+    watch: true
+
+  user:create:
+    desc: Create a new user record in DynamoDB
+    vars:
+      user_id: '{{.USER_ID | default "auth0|123"}}'
+      email: '{{.EMAIL | default "user@example.com"}}'
+      orgs: '{{.ORGS | default "[]"}}'
+    cmds:
+      - |
+        echo '{
+          "TableName": "poc-users",
+          "Item": {
+            "pk": {
+              "S": "USER#{{.user_id}}"
+            },
+            "sk": {
+              "S": "METADATA"
+            },
+            "email": {
+              "S": "{{.email}}"
+            },
+            "status": {
+              "S": "ACTIVE"
+            },
+            "organizations": {
+              "L": {{.orgs}}
+            }
+          }
+        }' > /tmp/dynamodb-put-item.json
+      - aws dynamodb put-item --cli-input-json file:///tmp/dynamodb-put-item.json
+      - rm /tmp/dynamodb-put-item.json
+
+  user:update-orgs:
+    desc: Update a user's organizations
+    vars:
+      user_id: '{{.USER_ID}}'
+      orgs: '{{.ORGS}}'
+    cmds:
+      - |
+        echo '{
+          "TableName": "poc-users",
+          "Key": {
+            "pk": {
+              "S": "USER#{{.user_id}}"
+            },
+            "sk": {
+              "S": "METADATA"
+            }
+          },
+          "UpdateExpression": "SET organizations = :orgs",
+          "ExpressionAttributeValues": {
+            ":orgs": {
+              "L": {{.orgs}}
+            }
+          }
+        }' > /tmp/dynamodb-update-item.json
+      - aws dynamodb update-item --cli-input-json file:///tmp/dynamodb-update-item.json
+      - rm /tmp/dynamodb-update-item.json
+
+  user:delete:
+    desc: Delete a user record
+    vars:
+      user_id: '{{.USER_ID}}'
+    cmds:
+      - |
+        echo '{
+          "TableName": "poc-users",
+          "Key": {
+            "pk": {
+              "S": "USER#{{.user_id}}"
+            },
+            "sk": {
+              "S": "METADATA"
+            }
+          }
+        }' > /tmp/dynamodb-delete-item.json
+      - aws dynamodb delete-item --cli-input-json file:///tmp/dynamodb-delete-item.json
+      - rm /tmp/dynamodb-delete-item.json
