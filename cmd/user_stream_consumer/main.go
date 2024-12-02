@@ -28,19 +28,19 @@ func run(stdout io.Writer, getenv func(string) string) error {
 
 func handler(logger *slog.Logger) func(ctx context.Context, event events.SQSEvent) error {
 	return func(ctx context.Context, event events.SQSEvent) error {
-		var records []events.DynamoDBEvent
+		var records []events.DynamoDBEventRecord
 
 		for _, record := range event.Records {
-			var dynamoevent events.DynamoDBEvent
-			_ = json.Unmarshal([]byte(record.Body), &dynamoevent)
-			records = append(records, dynamoevent)
+			var der events.DynamoDBEventRecord
+			_ = json.Unmarshal([]byte(record.Body), &der)
+			records = append(records, der)
 		}
 
 		logger.InfoContext(
 			ctx,
 			"user_stream_consumer",
 			slog.Any("event", event),
-			slog.Any("records", records))
+			slog.Any("dynamoEventRecords", records))
 
 		return nil
 	}
